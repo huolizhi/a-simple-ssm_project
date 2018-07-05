@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:security="http://www.springframework.org/schema/security"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans.xsd
+    http://www.springframework.org/schema/security
+    http://www.springframework.org/schema/security/spring-security.xsd">
+
+   <!--不拦截-->
+    <security:http pattern="/login.jsp" security="none"></security:http>
+    <security:http pattern="/failer.jsp" security="none"></security:http>
+    <security:http pattern="/css/**" security="none"></security:http>
+    <security:http pattern="/img/**" security="none"></security:http>
+    <security:http pattern="/plugins/**" security="none"></security:http>
+
+
+    <!--拦截规则-->
+    <security:http auto-config="true" use-expressions="true">
+        <!--拦截请求地址-->
+        <security:intercept-url pattern="/**" access="hasAnyAuthority('ROLE_USER','ROLE_ADMIN')"></security:intercept-url>
+        <!--配置自己登陆页面-->
+        <security:form-login login-page="/login.jsp" login-processing-url="/login" default-target-url="/index.jsp" authentication-failure-url="/failer.jsp"></security:form-login>
+        <!--配置登出页面-->
+        <security:logout invalidate-session="true" logout-url="/logout"  logout-success-url="/login.jsp"></security:logout>
+        <!--关闭跨域请求-->
+        <security:csrf disabled="true"></security:csrf>
+        <!--设置没有权限的访问页面-->
+        <security:access-denied-handler error-page="/403.jsp"></security:access-denied-handler>
+    </security:http>
+
+    <!--用户 自己写的用户信息 -->
+   <!-- <security:authentication-manager>
+        <security:authentication-provider>
+            <security:user-service>
+                <security:user name="user" password="{noop}123" authorities="ROLE_USER"></security:user>
+            </security:user-service>
+        </security:authentication-provider>
+    </security:authentication-manager>-->
+
+    <!--从后台代码获取的用户信息-->
+    <security:authentication-manager>
+        <security:authentication-provider user-service-ref="sysUserService">
+            <!--提供加密方式，自动解析密码，与数据库的密文密码比较-->
+            <security:password-encoder ref="passwordEncoder"></security:password-encoder>
+        </security:authentication-provider>
+
+    </security:authentication-manager>
+    <!--创建加密类，交给容器-->
+    <bean id="passwordEncoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder"></bean>
+
+<!--开启jsr250支持-->
+   <!-- <security:global-method-security jsr250-annotations="enabled"/>-->
+<!--security注解方式权限拦截-->
+    <security:global-method-security secured-annotations="enabled"/>
+<!--打开Spring表达式的方式注解支持-->
+   <!-- <security:global-method-security pre-post-annotations="enabled"></security:global-method-security>-->
+</beans>
